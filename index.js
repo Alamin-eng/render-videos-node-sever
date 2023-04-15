@@ -26,6 +26,7 @@ app.get("/", (req, res) => {
   pool
     .query("SELECT * FROM urls")
     .then((result) => res.send(result.rows)) // need to use rows to view only table data
+
     .catch((error) => {
       console.error(error);
       res.status(500);
@@ -54,10 +55,10 @@ app.post("/", (req, res) => {
 });
 
 // GET "/{id}"
-app.get("/:id", (req, res) => {
+app.get('/:id', (req, res) => {
   const id = parseInt(req.params.id);
   pool
-    .query("SELECT * FROM urls WHERE id=$1", [id])
+    .query('SELECT * FROM urls WHERE id=$1', [id])
     .then((result) => res.json(result.rows))
     .catch((error) => {
       console.error(error);
@@ -66,16 +67,26 @@ app.get("/:id", (req, res) => {
 });
 
 // DELETE "/{id}"
-app.delete("/:id", (req, res) => {
-  const id = parseInt(req.params.id); // notice it as the req.params.id is originally a string
-  pool
-    .query("DELETE FROM urls WHERE id=$1", [id])
-    .then(() => res.send(`Video ${id} deleted!`))
-    .catch((error) => {
-      console.error(error);
-      res.status(500).json(error);
-    });
-});
+app.delete('/:id',async (req, res) => {
+  const id = parseInt(req.params.id); 
+  console.log(typeof id)
+   const client = await pool.connect();
+  try {
+    await client.query('DELETE FROM urls WHERE id = $1', [id]);
+    res.status(200).send(`Item with ID ${id} has been deleted`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error deleting item');
+  } finally {
+    client.release();
+  }
+//   pool
+//     .query("DELETE FROM urls WHERE id=$1", [id], (err, res) => {
+//   if (err) throw err;
+//   console.log(`Item with id ${id} has been deleted`);
+// });
+})
+
 //-- Delete 
 module.exports = pool;
 //RENDER ------------

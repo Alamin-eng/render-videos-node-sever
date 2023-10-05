@@ -46,8 +46,8 @@ app.post("/", (req, res) => {
     pool.query(query, [newVideo.title, newVideo.url, 0], (results) => {
       console.log(results.rows);
       res.status(200).send(results.rows[0]);
-      pool.release();
     });
+    pool.release();
   }
 });
 

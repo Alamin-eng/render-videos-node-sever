@@ -25,7 +25,7 @@ const pool = new Pool(config);
 
 app.get("/", async (req, res) => {
   try {
-    pool.query("SELECT * FROM url").then((result) => res.send(result.rows)); // need to use rows to view only table data
+    pool.query("SELECT * FROM url").then((result) => res.json(result.rows)); // need to use rows to view only table data
   } catch (error) {
     console.error(error);
     res.status(500);
@@ -34,19 +34,24 @@ app.get("/", async (req, res) => {
 
 // Post method
 app.post("/", (req, res) => {
-  pool.connect();
-  const newVideo = req.body;
+  try {
+    pool.connect();
+    const newVideo = req.body;
 
-  if (!newVideo.title || !newVideo.url) {
-    res.send({ result: "failure", message: "Video could not be saved" });
-  } else {
-    const query =
-      "INSERT INTO url (title, url, rating) VALUES ($1, $2, $3) RETURNING id"; // notice how we returned id
+    if (!newVideo.title || !newVideo.url) {
+      res.send({ result: "failure", message: "Video could not be saved" });
+    } else {
+      const query =
+        "INSERT INTO url (title, url, rating) VALUES ($1, $2, $3) RETURNING id"; // notice how we returned id
 
-    pool.query(query, [newVideo.title, newVideo.url, 0], (results) => {
-      console.log(results.rows);
-      res.status(200).send(results.rows[0]);
-    });
+      pool.query(query, [newVideo.title, newVideo.url, 0], (results) => {
+        console.log(results.rows);
+        res.status(200).json(results.rows[0]);
+      });
+    }
+  } catch (error) {
+    console.error(error);
+  } finally {
     pool.release();
   }
 });

@@ -2,7 +2,7 @@
 const express = require("express");
 const app = express();
 const cor = require("cors");
-const { Pool } = require("postgres-pool");
+const { Pool } = require("pg");
 const env = require("dotenv");
 
 app.use(cor());

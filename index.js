@@ -22,6 +22,7 @@ const config = {
 };
 const pool = new Pool(config);
 // get request
+
 app.get("/", async (req, res) => {
   try {
     pool.query("SELECT * FROM url").then((result) => res.send(result.rows)); // need to use rows to view only table data
@@ -33,20 +34,19 @@ app.get("/", async (req, res) => {
 
 // Post method
 app.post("/", (req, res) => {
+  pool.connect();
   const newVideo = req.body;
 
   if (!newVideo.title || !newVideo.url) {
     res.send({ result: "failure", message: "Video could not be saved" });
   } else {
     const query =
-      "INSERT INTO url (title,url,rating) VALUES ($1, $2, $3) RETURNING id"; // notice how we returned id
+      "INSERT INTO url (title, url, rating) VALUES ($1, $2, $3) RETURNING id"; // notice how we returned id
 
-    pool.query(query, [newVideo.title, newVideo.url, 0], (error, results) => {
-      if (error) {
-        throw error;
-      }
+    pool.query(query, [newVideo.title, newVideo.url, 0], (results) => {
       console.log(results.rows);
       res.status(200).send(results.rows[0]);
+      pool.release();
     });
   }
 });

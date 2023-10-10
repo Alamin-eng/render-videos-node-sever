@@ -33,23 +33,54 @@ app.get("/", async (req, res) => {
 });
 
 // Post method
-app.post("/", (req, res) => {
-  const newVideo = req.body;
-  pool.connect();
-  if (!newVideo.title || !newVideo.url) {
-    res.send({ result: "failure", message: "Video could not be saved" });
-  } else {
-    const query =
-      "INSERT INTO url (title, url, rating) VALUES ($1,$2,$3) RETURNING id"; // notice how we returned id
+// app.post("/", (req, res) => {
+//   const newVideo = req.body;
+  
+//   if (!newVideo.title || !newVideo.url) {
+//     res.send({ result: "failure", message: "Video could not be saved" });
+//   } else {
+//     const query =
+//       "INSERT INTO url (title, url, rating) VALUES ($1,$2,$3) RETURNING id"; // notice how we returned id
 
-    pool.query(query, [newVideo.title, newVideo.url, 0], (error, results) => {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log(results.rows);
-        res.status(200).json(results.rows[0]);
-      }
-    });
+//     pool.query(query, [newVideo.title, newVideo.url, 0], (error, results) => {
+//       if (error) {
+//         console.log(error);
+//       } else {
+//         console.log(results.rows);
+//         res.status(200).json(results.rows[0]);
+//       }
+//     });
+//   }
+// });
+
+// Post method
+app.post("/", async (req, res) => {
+  const newVideo = req.body;
+  
+  try {
+    const client = await pool.connect();
+
+    if (!newVideo.title || !newVideo.url) {
+      res.send({ result: "failure", message: "Video could not be saved" });
+      return; // Return early to avoid the rest of the code execution
+    }
+
+    const query =
+      "INSERT INTO url (title, url, rating) VALUES ($1,$2,$3) RETURNING id";
+
+    const { rows } = await client.query(query, [
+      newVideo.title,
+      newVideo.url,
+      0,
+    ]);
+
+    client.release(); // Release the client back to the pool
+
+    console.log(rows);
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

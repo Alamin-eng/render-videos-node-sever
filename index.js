@@ -33,32 +33,23 @@ app.get("/", async (req, res) => {
 });
 
 // Post method
-app.post("/", async (req, res) => {
-  try {
-    const client = await pool.connect();
-    const newVideo = req.body;
+app.post("/", (req, res) => {
+  const newVideo = req.body;
+  pool.connect();
+  if (!newVideo.title || !newVideo.url) {
+    res.send({ result: "failure", message: "Video could not be saved" });
+  } else {
+    const query =
+      "INSERT INTO url (title, url, rating) VALUES ($1,$2,$3) RETURNING id"; // notice how we returned id
 
-    if (!newVideo.title || !newVideo.url) {
-      res.send({ result: "failure", message: "Video could not be saved" });
-    } else {
-      const query =
-        "INSERT INTO url (title, url, rating) VALUES ($1,$2,$3) RETURNING id"; // notice how we returned id
-
-      client.query(
-        query,
-        [newVideo.title, newVideo.url, 0],
-        (error, results) => {
-          if (error) {
-            console.log(error);
-          } else {
-            console.log(results.rows);
-            res.status(200).json(results.rows[0]);
-          }
-        }
-      );
-    }
-  } catch (error) {
-    console.error(error);
+    pool.query(query, [newVideo.title, newVideo.url, 0], (error, results) => {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log(results.rows);
+        res.status(200).json(results.rows[0]);
+      }
+    });
   }
 });
 
